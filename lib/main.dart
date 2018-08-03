@@ -27,7 +27,7 @@ class _LogoAppState extends State<LogoApp> with SingleTickerProviderStateMixin {
         ),
       ),
       );
-    animation = _opacity = Tween<double>(
+   _opacity = Tween<double>(
       begin: 0.0,
       end: 0.10,
     ).animate(
