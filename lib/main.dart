@@ -86,8 +86,7 @@ class _LogoAppState extends State<LogoApp> with SingleTickerProviderStateMixin {
 
   handleTimeout() {
     print('intimeout1');
-    Navigator.of(context).pushReplacement(new MaterialPageRoute(
-      builder: (BuildContext context) => new MyApp()));
+    Navigator.of(context).pushReplacementNamed('/HomeScreen');
   }
 
    @override
@@ -123,6 +122,9 @@ void main() {
     new MaterialApp( 
       home: LogoApp(),
       theme: ThemeData.dark(),
+      routes: <String, WidgetBuilder>{
+      '/HomeScreen': (BuildContext context) => new MyApp()
+    },
     )
   );
 }
