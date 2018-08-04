@@ -84,11 +84,15 @@ class _LogoAppState extends State<LogoApp> with SingleTickerProviderStateMixin {
 
   AnimationController controller;
 
-  handleTimeout() {
+  void handleTimeout() {
     print('intimeout1');
     Navigator.of(context).pushReplacementNamed('/HomeScreen');
   }
 
+  startTime() async { 
+    var _duration = new Duration(seconds: 2); 
+    return new Timer(_duration, handleTimeout); 
+  }
    @override
   initState() {
     super.initState();
@@ -100,7 +104,7 @@ class _LogoAppState extends State<LogoApp> with SingleTickerProviderStateMixin {
         });
     });
     controller.forward();
-    Timer(Duration(seconds: 3), () => handleTimeout);
+    //Timer(Duration(seconds: 3), () => handleTimeout);
   }
 
   @override
