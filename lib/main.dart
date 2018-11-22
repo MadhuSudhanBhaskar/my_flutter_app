@@ -1,8 +1,11 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:binge/pages/main.search.page.dart';
 import 'package:binge/pages/checkout.page.dart';
 import 'package:flutter/rendering.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:permission_handler/permission_handler.dart';
 //
 // Created by Braulio Cassule
 // 30 December 2017
@@ -25,16 +28,40 @@ class _LogoAppState extends State<MyApp> with
   Color gradientStart = const Color(0xFFE8E8E8);//Change end gradient color here
   AnimationController _controller;
   PageController _pageController;
-
+  PermissionStatus _permissionStatus = PermissionStatus.unknown;
   @override
-  initState() {
-    SystemChrome.setEnabledSystemUIOverlays([]);
+  initState(){
      _pageController = new PageController();
+
+     test2();
     _controller = new AnimationController(
       duration: const Duration(milliseconds: 1000),
       vsync: this,
     );
     _controller.forward();
+  }
+
+
+  void test2() async {
+    GeolocationStatus geolocationStatus;
+     String get = '';
+    try {
+      geolocationStatus = await Geolocator().checkGeolocationPermissionStatus();
+      print('geolocation');
+      print(geolocationStatus);
+      if (geolocationStatus.toString() == 'GeolocationStatus.granted') {
+        Position position = await Geolocator().getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+        //13.012405, 77.536148
+        List<Placemark> placemarks = await Geolocator().placemarkFromCoordinates(position.longitude, position.latitude);
+        print('placemark');
+        print(placemarks.first.postalCode);
+      } else{
+      final Future<Map<PermissionGroup, PermissionStatus>> requestFuture =
+              PermissionHandler().requestPermissions([PermissionGroup.location]);
+      }
+    } on PlatformException {
+      geolocationStatus = null;
+    }
   }
 
   @override
@@ -58,45 +85,46 @@ class _LogoAppState extends State<MyApp> with
         fontSize: 20.0,
     );
     return new MaterialApp(
-      home: new Scaffold(
-        backgroundColor: gradientStart,
-        body: new Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            _topAppBar(context),
-            new Container(
-              padding: const EdgeInsets.only(top:10.0),
-            ),
-            Expanded(
-              flex: 2,
-              child: new PageView(
-                physics:new NeverScrollableScrollPhysics(),
-                children: <Widget>[
-                  MainSearchPage(
-                    controller: _controller,
-                  ),
-                  MainSearchPage(
-                    controller: _controller,
-                  ),
-                  CheckoutPage(
-                    controller: _controller,
-                  ),
-                ],
-                onPageChanged: onPageChanged,
-                controller: _pageController,
+      debugShowCheckedModeBanner: false,
+      home: Builder(
+        builder: (context) =>
+        new Scaffold(
+          backgroundColor: Colors.white,
+          body: new Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: <Widget>[
+              _topAppBar(context),
+              Expanded(
+                flex: 2,
+                child: new PageView(
+                  physics:new NeverScrollableScrollPhysics(),
+                  children: <Widget>[
+                    MainSearchPage(
+                      controller: _controller,
+                    ),
+                    MainSearchPage(
+                      controller: _controller,
+                    ),
+                    CheckoutPage(
+                      controller: _controller,
+                    ),
+                  ],
+                  onPageChanged: onPageChanged,
+                  controller: _pageController,
+                ),
               ),
-            ),
-          ],
-        ),
-        bottomNavigationBar: BottomNavigationBar(
-          items: <BottomNavigationBarItem>[
-            BottomNavigationBarItem(icon: Icon(Icons.home), title: Text('Home',style: style,)),
-            BottomNavigationBarItem(icon: Icon(Icons.shopping_basket), title: Text('Checkout',style: style,)),
-            BottomNavigationBarItem(icon: Icon(Icons.more), title: Text('More',style: style,)),
-          ],
-          fixedColor: Color(0xFF008761),
-          onTap: navigationTapped,
-          currentIndex: _page,
+            ],
+          ),
+          bottomNavigationBar: BottomNavigationBar(
+            items: <BottomNavigationBarItem>[
+              BottomNavigationBarItem(icon: Icon(Icons.home), title: Text('Home',style: style,)),
+              BottomNavigationBarItem(icon: Icon(Icons.shopping_basket), title: Text('Checkout',style: style,)),
+              BottomNavigationBarItem(icon: Icon(Icons.more), title: Text('More',style: style,)),
+            ],
+            fixedColor: Color(0xFF008761),
+            onTap: navigationTapped,
+            currentIndex: _page,
+          ),
         ),
       ),
     );
@@ -110,28 +138,30 @@ class _LogoAppState extends State<MyApp> with
 
   Widget _topAppBar(BuildContext context) {
     return new Card( 
-      elevation: 3,
+      margin: EdgeInsets.all(0),
+      elevation: 0,
       child: Container(
-    
-    height: 140,
+    height: 85,
     decoration: BoxDecoration(
       color: Colors.white,
     ),
-    padding: const EdgeInsets.all(10.0),
+    padding: const EdgeInsets.only(right:10.0, left: 10,top: 20),
       child: new Column(
         children: <Widget>[
           new Row(
             children: <Widget>[
               Expanded(
-              child: new Text('Binge', style: TextStyle(
+                child: Center(
+                  child: new Text('Binge', style: TextStyle(
                 fontSize: 36,
                 fontFamily: 'Pacifico',
                 color: Color(0xFF008761),
                 ),
               ),
+                ),
               ),
-              RaisedButton(
-              child:Icon(
+              IconButton(
+                icon:Icon(
                 Icons.search,
                 color: Color(0xFF008761),
                 size: 30.0,
@@ -156,15 +186,62 @@ class SecondScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text("Second Screen"),
-      ),
-      body: Center(
-        child: RaisedButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          child: Text('Go back!'),
+      body: Padding(
+        padding: EdgeInsets.only(top:30.0),
+        child: new Column(
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+           Padding(
+               padding: EdgeInsets.only(right:15.0),
+               child: IconButton(
+              icon:Icon(
+                Icons.arrow_back,
+                  color: Color(0xFF008761),
+                  size: 30.0,
+                ),
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+              ),
+            ),
+            new SizedBox(
+                  width: 250.0,
+                  child: TextFormField(
+                    autofocus: true,
+                style: TextStyle(
+                    color: Color(0xFF342D2A),
+                    fontFamily: 'KalamLight',
+                    fontWeight: FontWeight.normal,
+                    fontSize: 20.0,
+                ),
+                decoration: const InputDecoration(
+                  
+                  contentPadding: EdgeInsets.all(4.0),
+                  disabledBorder: InputBorder.none,
+                  border: InputBorder.none,
+                  filled: true,
+                  fillColor: Color(0xFFE8E8E8),
+                  hintText: 'Locality/Area',
+                  hintStyle: TextStyle(
+                    color: Color(0xFF342D2A),
+                    fontFamily: 'KalamLight',
+                    fontWeight: FontWeight.normal,
+                    fontSize: 20.0,
+                  ),
+                ),
+              ),
+                ),
+              ],
+            ),
+            Padding(
+              padding: EdgeInsets.only(top:8.0),
+            ),
+            new Container(
+              height: 1.5,
+              color: Color(0xFF342D2A),
+            ),
+            ],
         ),
       ),
     );
