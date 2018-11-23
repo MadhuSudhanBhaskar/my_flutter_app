@@ -1,4 +1,4 @@
-
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:binge/pages/main.search.page.dart';
@@ -6,6 +6,8 @@ import 'package:binge/pages/checkout.page.dart';
 import 'package:flutter/rendering.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:android_intent/android_intent.dart';
+
 //
 // Created by Braulio Cassule
 // 30 December 2017
@@ -22,15 +24,18 @@ class MyApp extends StatefulWidget {
 }
 
 class _LogoAppState extends State<MyApp> with
-  SingleTickerProviderStateMixin{
+  SingleTickerProviderStateMixin, WidgetsBindingObserver{
+
   int _page = 0;
   Color gradientEnd = const Color(0xFFFF5640); //Change start gradient color here
   Color gradientStart = const Color(0xFFE8E8E8);//Change end gradient color here
   AnimationController _controller;
   PageController _pageController;
-  PermissionStatus _permissionStatus = PermissionStatus.unknown;
+  GeolocationStatus geolocationStatus;
+  static const platform = const MethodChannel('samples.flutter.io/battery');
   @override
   initState(){
+    WidgetsBinding.instance.addObserver(this);
      _pageController = new PageController();
 
      test2();
@@ -39,31 +44,82 @@ class _LogoAppState extends State<MyApp> with
       vsync: this,
     );
     _controller.forward();
+    print('STREAMCHECK');
   }
 
-
+  // APP LIFE CYCLE 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    print('stateintest');
+    print(state);
+    if (state.toString() == 'AppLifecycleState.resumed') {
+      _resumed();
+    }
+  }
+  void _resumed() async {
+    print('_resumed');
+    geolocationStatus = await Geolocator().checkGeolocationPermissionStatus();
+    print('geolocationStatus.UU');
+    print(geolocationStatus);
+    if (geolocationStatus.toString() == 'GeolocationStatus.granted') { 
+      // CALL FUNCTION TO RETURN POSITIONS
+    }
+  }
   void test2() async {
-    GeolocationStatus geolocationStatus;
      String get = '';
     try {
       geolocationStatus = await Geolocator().checkGeolocationPermissionStatus();
-      print('geolocation');
+      print('geolocationtest2');
       print(geolocationStatus);
       if (geolocationStatus.toString() == 'GeolocationStatus.granted') {
+        print('geolocationStatusGRANTED');
         Position position = await Geolocator().getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
         //13.012405, 77.536148
+        print(position);
         List<Placemark> placemarks = await Geolocator().placemarkFromCoordinates(position.longitude, position.latitude);
-        print('placemark');
         print(placemarks.first.postalCode);
-      } else{
-      final Future<Map<PermissionGroup, PermissionStatus>> requestFuture =
-              PermissionHandler().requestPermissions([PermissionGroup.location]);
+      } if (geolocationStatus.toString() == 'GeolocationStatus.disabled') {
+
+          _neverSatisfied();
+      } else {
+        print('DENAY');
+        Map<PermissionGroup, PermissionStatus> permissionsS = await PermissionHandler().requestPermissions([PermissionGroup.locationAlways]);
+        print(permissionsS);
+        Position position = await Geolocator().getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+        print(position);
       }
     } on PlatformException {
       geolocationStatus = null;
     }
   }
 
+Future<void> _neverSatisfied() async {
+  return showDialog<void>(
+    context: context,
+    barrierDismissible: false, // user must tap button!
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text('Rewind and remember'),
+        content: SingleChildScrollView(
+          child: ListBody(
+            children: <Widget>[
+              Text('You will never be satisfied.'),
+              Text('You\’re like me. I’m never satisfied.'),
+            ],
+          ),
+        ),
+        actions: <Widget>[
+          FlatButton(
+            child: Text('Regret'),
+            onPressed: () {
+              Navigator.of(context).pop();
+            },
+          ),
+        ],
+      );
+    },
+  );
+}
   @override
   void dispose() {
     _controller.dispose();
