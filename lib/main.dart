@@ -45,6 +45,7 @@ class _LogoAppState extends State<MyApp> with
     );
     _controller.forward();
     print('STREAMCHECK');
+    _neverSatisfied();
   }
 
   // APP LIFE CYCLE 
@@ -80,7 +81,7 @@ class _LogoAppState extends State<MyApp> with
         print(placemarks.first.postalCode);
       } if (geolocationStatus.toString() == 'GeolocationStatus.disabled') {
 
-          _neverSatisfied();
+          // _neverSatisfied();
       } else {
         print('DENAY');
         Map<PermissionGroup, PermissionStatus> permissionsS = await PermissionHandler().requestPermissions([PermissionGroup.locationAlways]);
