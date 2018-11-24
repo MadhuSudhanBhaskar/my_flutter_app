@@ -32,6 +32,7 @@ class _LogoAppState extends State<MyApp> with
   AnimationController _controller;
   PageController _pageController;
   GeolocationStatus geolocationStatus;
+  bool offstageFlag = true;
   static const platform = const MethodChannel('samples.flutter.io/battery');
   @override
   initState(){
@@ -45,9 +46,9 @@ class _LogoAppState extends State<MyApp> with
     );
     _controller.forward();
     print('STREAMCHECK');
-    _neverSatisfied();
+    _showAlert(context);
   }
-
+ 
   // APP LIFE CYCLE 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
@@ -80,8 +81,11 @@ class _LogoAppState extends State<MyApp> with
         List<Placemark> placemarks = await Geolocator().placemarkFromCoordinates(position.longitude, position.latitude);
         print(placemarks.first.postalCode);
       } if (geolocationStatus.toString() == 'GeolocationStatus.disabled') {
-
           // _neverSatisfied();
+          setState(() {
+            offstageFlag = false;            
+          });
+          
       } else {
         print('DENAY');
         Map<PermissionGroup, PermissionStatus> permissionsS = await PermissionHandler().requestPermissions([PermissionGroup.locationAlways]);
@@ -93,34 +97,15 @@ class _LogoAppState extends State<MyApp> with
       geolocationStatus = null;
     }
   }
-
-Future<void> _neverSatisfied() async {
-  return showDialog<void>(
-    context: context,
-    barrierDismissible: false, // user must tap button!
-    builder: (BuildContext context) {
-      return AlertDialog(
-        title: Text('Rewind and remember'),
-        content: SingleChildScrollView(
-          child: ListBody(
-            children: <Widget>[
-              Text('You will never be satisfied.'),
-              Text('You\’re like me. I’m never satisfied.'),
-            ],
-          ),
-        ),
-        actions: <Widget>[
-          FlatButton(
-            child: Text('Regret'),
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-          ),
-        ],
+    void _showAlert(BuildContext context) {
+      showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: Text("Wifi"),
+            content: Text("Wifi not detected. Please activate it."),
+          )
       );
-    },
-  );
-}
+    }
   @override
   void dispose() {
     _controller.dispose();
@@ -151,6 +136,10 @@ Future<void> _neverSatisfied() async {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               _topAppBar(context),
+              //Offstage(
+        //offstage: offstageFlag,
+        //child: _showDialog(context),
+      //),
               Expanded(
                 flex: 2,
                 child: new PageView(
@@ -192,6 +181,8 @@ Future<void> _neverSatisfied() async {
     _pageController.animateToPage(page,
         duration: const Duration(milliseconds: 300), curve: Curves.ease);
   }
+
+
 
   Widget _topAppBar(BuildContext context) {
     return new Card( 
