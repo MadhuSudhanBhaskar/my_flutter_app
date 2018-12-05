@@ -1,117 +1,126 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:binge/model/city.model.dart';
-import 'package:binge/pages/search/search.page.dart';
-import 'dart:async';
-import 'dart:convert';
 import 'package:binge/animation/animation.dart';
+import 'package:binge/model/resturants.model.dart';
+import 'package:binge/pages/resturantdetails/resturants.detals.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
-class AddEntryDialog extends StatefulWidget {
+class MainSearchPage extends StatefulWidget {
+    MainSearchPage({
+    @required AnimationController controller,
+    @required final this.pincode,
+  }) : animation = new BingeAnimation(controller);
+  final BingeAnimation animation;
+  final pincode;
+  static bool mountedData; 
+   // Stateful Widgets don't have build methods.
+   // They have createState() methods.
+   // Create State returns a class that extends Flutters State class.
   @override
-  AddEntryDialogState createState() => new AddEntryDialogState();
+  _MyHomePageState createState() => new _MyHomePageState();
+
+  // Stateful Widgets are rarely more complicated than this.
 }
 
-class AddEntryDialogState extends State<AddEntryDialog> {
+class _MyHomePageState extends State<MainSearchPage> with
+  SingleTickerProviderStateMixin , AutomaticKeepAliveClientMixin<MainSearchPage>{
 
-  StreamController<CityList> streamController;
-  List<CityList> list = [];
-  bool hasLoaded = false;
+  AnimationController _controller;
+
 
   @override
-  void initState() {
+  void initState(){
+
+    if(!this.mounted) return;
+    print('aftermounting===INWIDGETINIDATA=======search');
     super.initState();
-    streamController = StreamController.broadcast();
-
-    streamController.stream.listen((p) => setState(() {
-      hasLoaded = true;
-      list.add(p);
-    }));
-
-    load(streamController);
+     _controller = new AnimationController(
+      duration: const Duration(milliseconds: 2200),
+      vsync: this,
+    );
+    _controller.forward();
   }
 
-  load(StreamController<CityList> sc) async {
-    String url = "http://ABC.COM/city/statusid/2";
-    var client = new http.Client();
-
-    var req = new http.Request('get', Uri.parse(url));
-
-    var streamedRes = await client.send(req);
-
-    streamedRes.stream
-      .transform(utf8.decoder)
-      .transform(json.decoder)
-      .expand((e) => e)
-      .map((map) => CityList.fromJson(map))
-      .pipe(sc);
-  }
-
+  
   @override
   void dispose() {
     super.dispose();
-    streamController?.close();
-    streamController = null;
+    _controller.dispose();
   }
+
+  Widget _buildSearch() {
+    print('widget.pincodepincodedatacoming===android');
+    print(widget.pincode);
+    //|| widget.pincode.toString() == '0.0'
+    if(widget.pincode == null) {
+      return new Container(
+        child: Container(),
+      );
+    }
+    print('NEWANIpincodeData');
+    print(widget.pincode);
+    return new Container(
+      child: _resturanData(),
+    );
+  
+  }
+
+  Widget _resturanData() {
+    return new FutureBuilder(
+      future: _makeDataCall(),
+      builder: (BuildContext context, AsyncSnapshot<ResturantsData> snapshot ) {
+        switch (snapshot.connectionState) {
+          case ConnectionState.none:
+            return new CircularProgressIndicator();
+          case ConnectionState.active:
+          case ConnectionState.waiting:
+            return Text('Awaiting result...');
+          case ConnectionState.done:
+            if (snapshot.hasError)
+              return Text('Error: ${snapshot.error}');
+            print(snapshot.data);
+            return new ResturantDetailsPage(
+              controller: _controller,
+              resturants: snapshot.data,
+            );
+        }
+      }
+    );
+  }
+
+Future<ResturantsData> _makeDataCall() async {
+  final response =
+      await http.get('http://sgc/restaurants/pincode/560063');
+
+  if (response.statusCode == 200) {
+    // If the call to the server was successful, parse the JSON
+    // return Video.fromJson(json.decode(response.body));
+   print( response.body.length);
+   var test = ResturantsData.fromJson(json.decode(response.body));
+   if(test.success) {
+     return test;
+   }
+   return test;
+  } else {
+    // If that call was not successful, throw an error.
+    throw Exception('Failed to load post');
+  }
+}
 
   @override
   Widget build(BuildContext context) {
-    print('pagecalled===again');
-    return new Scaffold(
-      backgroundColor: Colors.white,
-      appBar: new AppBar(
-        iconTheme: IconThemeData(color: Color(0XFFff6969)),
-        elevation: 0,
-        backgroundColor: Colors.white,
-        title: Text('Please select city',style: TextStyle(
-                    fontSize: 24,
-                    fontFamily: 'Pacifico',
-                    color: Color(0xFF515c6f),
-                  )),
-      ),
-      body: new Column (
+    
+    print('INBUULS');
+    return new Container(
+      child: new Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            hasLoaded ? Container() : Center(
-              child:Container(
-                padding: EdgeInsets.only(top: 20.0),
-                child:CircularProgressIndicator(),
-              ),
-            ),
-            Expanded(
-              child: ListView.builder(
-              itemBuilder: (BuildContext context, int index) => _makeElement(index),
-            ),
-          ),
-        ]
+        children: <Widget>[
+          new Flexible(flex: 4, child: _buildSearch()),
+        ],
       ),
-      
-
     );
   }
+    @override
+bool get wantKeepAlive => true;
 
-    Widget _makeElement(int index) {
-    if (index >= list.length) {
-      return null;
-    }
-
-   return Column(
-      children: <Widget>[
-        ListTile(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => SecondScreen(
-                cityPincode: list[index].data
-                )),
-            );
-          },
-          leading: Icon(Icons.location_city),
-          title: Text('d'),
-        ),
-        Divider(
-          color: Color(0xFFD8D8D8),
-        ),
-      ],
-    );
-  }
 }
